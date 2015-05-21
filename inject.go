@@ -5,9 +5,14 @@ import (
 	"reflect"
 )
 
-type Injector interface {
+type Inject interface {
+	Injector
 	Invoker
 	TypeMapper
+}
+
+type Injector interface {
+	Inject(interface{}) error
 }
 
 type Invoker interface {
@@ -29,16 +34,52 @@ func TypeOf(val interface{}) reflect.Type {
 	return t
 }
 
+func ValueOf(val interface{}) reflect.Value {
+	v := reflect.ValueOf(val)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	return v
+}
+
 type injector struct {
 	typeMap map[reflect.Type]reflect.Value
 	tagMap  map[string]reflect.Value
 }
 
-func New() Injector {
+func New() Inject {
 	return &injector{
 		typeMap: make(map[reflect.Type]reflect.Value),
 		tagMap:  make(map[string]reflect.Value),
 	}
+}
+
+func (i *injector) Inject(stc interface{}) error {
+	v := ValueOf(stc)
+	t := TypeOf(stc)
+	if v.Kind() != reflect.Struct {
+		return nil
+	}
+	for j := 0; j < v.NumField(); j++ {
+		f := v.Field(j)
+		stcField := t.Field(j)
+		if f.CanSet() {
+			var (
+				value reflect.Value
+				err   error
+			)
+			if stcField.Tag == "inject" || stcField.Tag.Get("inject") != "" {
+				value, err = i.GetTag(stcField.Tag.Get("inject"))
+			} else {
+				value, err = i.Get(f.Type())
+			}
+			if err != nil {
+				return err
+			}
+			f.Set(value)
+		}
+	}
+	return nil
 }
 
 func (i *injector) Invoke(fn interface{}) ([]reflect.Value, error) {
@@ -92,7 +133,7 @@ func (i *injector) Get(t reflect.Type) (reflect.Value, error) {
 func (i *injector) GetTag(tag string) (reflect.Value, error) {
 	val := i.tagMap[tag]
 	var err error
-	if val.IsValid() {
+	if !val.IsValid() {
 		err = errors.New("value is not valid")
 	}
 	return val, err

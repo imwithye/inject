@@ -42,3 +42,25 @@ func Test_Invoke(t *testing.T) {
 	}
 	injector.Invoke(fn)
 }
+
+func Test_Inject(t *testing.T) {
+	type user struct {
+		Name     string `inject:"name"`
+		Password string `inject:"password"`
+		Usertype string
+	}
+	injector := New()
+
+	usertype := "normal"
+	injector.Map(usertype)
+	name := "Ciel"
+	password := "123456"
+	injector.MapTag(name, "name")
+	injector.MapTag(password, "password")
+
+	u := user{}
+	injector.Inject(&u)
+	equal(t, u.Name, name)
+	equal(t, u.Password, password)
+	equal(t, u.Usertype, usertype)
+}
