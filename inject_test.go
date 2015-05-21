@@ -64,3 +64,25 @@ func Test_Inject(t *testing.T) {
 	equal(t, u.Password, password)
 	equal(t, u.Usertype, usertype)
 }
+
+func Test_InjectCustomTag(t *testing.T) {
+	type user struct {
+		Name     string `db:"name"`
+		Password string `db:"password"`
+		Usertype string
+	}
+	injector := NewTag("db")
+
+	usertype := "normal"
+	injector.Map(usertype)
+	name := "Ciel"
+	password := "123456"
+	injector.MapTag(name, "name")
+	injector.MapTag(password, "password")
+
+	u := user{}
+	injector.Inject(&u)
+	equal(t, u.Name, name)
+	equal(t, u.Password, password)
+	equal(t, u.Usertype, usertype)
+}

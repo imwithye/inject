@@ -13,6 +13,7 @@ type Inject interface {
 
 type Injector interface {
 	Inject(interface{}) error
+	InjectTag(interface{}, string) error
 }
 
 type Invoker interface {
@@ -43,18 +44,28 @@ func ValueOf(val interface{}) reflect.Value {
 }
 
 type injector struct {
+	tag     string
 	typeMap map[reflect.Type]reflect.Value
 	tagMap  map[string]reflect.Value
 }
 
 func New() Inject {
+	return NewTag("inject")
+}
+
+func NewTag(tag string) Inject {
 	return &injector{
+		tag:     tag,
 		typeMap: make(map[reflect.Type]reflect.Value),
 		tagMap:  make(map[string]reflect.Value),
 	}
 }
 
 func (i *injector) Inject(stc interface{}) error {
+	return i.InjectTag(stc, i.tag)
+}
+
+func (i *injector) InjectTag(stc interface{}, tag string) error {
 	v := ValueOf(stc)
 	t := TypeOf(stc)
 	if v.Kind() != reflect.Struct {
@@ -68,8 +79,8 @@ func (i *injector) Inject(stc interface{}) error {
 				value reflect.Value
 				err   error
 			)
-			if stcField.Tag == "inject" || stcField.Tag.Get("inject") != "" {
-				value, err = i.GetTag(stcField.Tag.Get("inject"))
+			if string(stcField.Tag) == tag || stcField.Tag.Get(tag) != "" {
+				value, err = i.GetTag(stcField.Tag.Get(tag))
 			} else {
 				value, err = i.Get(f.Type())
 			}
