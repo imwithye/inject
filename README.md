@@ -2,6 +2,7 @@ Inject
 ===
 [![Build Status](https://travis-ci.org/imwithye/inject.svg)](https://travis-ci.org/imwithye/inject)
 [![GoDoc](https://godoc.org/github.com/imwithye/inject?status.svg)](https://godoc.org/github.com/imwithye/inject)
+
 Dependency injection library for golang.
 
 ## Usage

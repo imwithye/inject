@@ -2,9 +2,8 @@
 //
 // It is original created by Jeremy Saenz and this is a fork version of
 // https://github.com/codegangsta/inject
-// This fork add tag name injection and custom tag support
 //
-//
+// This fork add tag name injection and custom tag support.
 //
 //  package main
 //
