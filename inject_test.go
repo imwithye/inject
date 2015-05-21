@@ -30,3 +30,15 @@ func Test_MapTag(t *testing.T) {
 	val, _ := injector.GetTag("name")
 	equal(t, val.String(), "Hello World")
 }
+
+func Test_Invoke(t *testing.T) {
+	injector := New()
+	str := "Ciel"
+	injector.Map(str)
+	fn := func(name string) {
+		if name != str {
+			t.Errorf("Expected %s - Got %s", str, name)
+		}
+	}
+	injector.Invoke(fn)
+}

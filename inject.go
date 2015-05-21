@@ -6,7 +6,12 @@ import (
 )
 
 type Injector interface {
+	Invoker
 	TypeMapper
+}
+
+type Invoker interface {
+	Invoke(interface{}) ([]reflect.Value, error)
 }
 
 type TypeMapper interface {
@@ -34,6 +39,22 @@ func New() Injector {
 		typeMap: make(map[reflect.Type]reflect.Value),
 		tagMap:  make(map[string]reflect.Value),
 	}
+}
+
+func (i *injector) Invoke(fn interface{}) ([]reflect.Value, error) {
+	t := reflect.TypeOf(fn)
+	var in = make([]reflect.Value, t.NumIn())
+
+	for j := 0; j < t.NumIn(); j++ {
+		argType := t.In(j)
+		val, err := i.Get(argType)
+		if err != nil {
+			return nil, err
+		}
+		in[j] = val
+	}
+
+	return reflect.ValueOf(fn).Call(in), nil
 }
 
 func (i *injector) Map(val interface{}) TypeMapper {
