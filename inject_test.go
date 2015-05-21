@@ -43,6 +43,29 @@ func Test_Invoke(t *testing.T) {
 	injector.Invoke(fn)
 }
 
+func Test_InvokeTag(t *testing.T) {
+	injector := New()
+	injector.Map("TOKEN: 19940730")
+	injector.MapTag("User", "name")
+	injector.MapTag("Password", "password")
+	injector.MapTag("Male", "gender")
+	fn := func(name, password, gender, token string) {
+		if name != "User" {
+			t.Errorf("Expected %s - Got %s", "User", name)
+		}
+		if password != "Password" {
+			t.Errorf("Expected %s - Got %s", "Password", password)
+		}
+		if gender != "Male" {
+			t.Errorf("Expected %s - Got %s", "Male", gender)
+		}
+		if token != "TOKEN: 19940730" {
+			t.Errorf("Expected %s - Got %s", "TOKEN: 19940730", gender)
+		}
+	}
+	injector.InvokeTag("name", "password", "gender", fn)
+}
+
 func Test_Inject(t *testing.T) {
 	type user struct {
 		Name     string `inject:"name"`

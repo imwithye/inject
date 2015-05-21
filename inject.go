@@ -59,6 +59,7 @@ type Injector interface {
 // Invoker represents an interface for calling functions via reflection.
 type Invoker interface {
 	Invoke(interface{}) ([]reflect.Value, error)
+	InvokeTag(...interface{}) ([]reflect.Value, error)
 }
 
 // TypeMapper represents an interface for mapping interface{} values based
@@ -149,6 +150,44 @@ func (i *injector) Invoke(fn interface{}) ([]reflect.Value, error) {
 	var in = make([]reflect.Value, t.NumIn())
 
 	for j := 0; j < t.NumIn(); j++ {
+		argType := t.In(j)
+		val, err := i.Get(argType)
+		if err != nil {
+			return nil, err
+		}
+		in[j] = val
+	}
+
+	return reflect.ValueOf(fn).Call(in), nil
+}
+
+func (i *injector) InvokeTag(vals ...interface{}) ([]reflect.Value, error) {
+	if len(vals) == 0 {
+		return nil, nil
+	}
+	if len(vals) == 1 {
+		return i.Invoke(vals[0])
+	}
+
+	fn := vals[len(vals)-1]
+	tags := vals[:len(vals)-1]
+
+	t := reflect.TypeOf(fn)
+	if len(tags) > t.NumIn() {
+		tags = tags[:t.NumIn()]
+	}
+	var in = make([]reflect.Value, t.NumIn())
+
+	for j := 0; j < len(tags); j++ {
+		argTag := tags[j].(string)
+		val, err := i.GetTag(argTag)
+		if err != nil {
+			return nil, err
+		}
+		in[j] = val
+	}
+
+	for j := len(tags); j < t.NumIn(); j++ {
 		argType := t.In(j)
 		val, err := i.Get(argType)
 		if err != nil {
