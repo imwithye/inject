@@ -1,3 +1,41 @@
+// Package inject is a dependency injection library for golang.
+//
+// It is original created by Jeremy Saenz and this is a fork version of
+// https://github.com/codegangsta/inject
+// This fork add tag name injection and custom tag support
+//
+//
+//
+//  package main
+//
+//  import "github.com/imwithye/inject"
+//
+//  func main() {
+//  	type user struct {
+//  		Name     string
+//  		Password string `inject:"password"`
+//  		Usertype string `inject:"usertype"`
+//  	}
+//  	injector := New()
+//
+//  	name := "Ciel"
+//  	injector.Map(name)
+//  	password := "123456"
+//  	injector.MapTag(password, "password")
+//  	usertype := "normal"
+//   	injector.MapTag(usertype, "usertype")
+//
+//  	u := user{}
+//  	injector.Inject(&u)
+//  	// u.Name == "Ciel"
+//  	// u.Password == "Ciel"
+//  	// u.Usertype == "normal"
+//
+//  	fn := func(name string) {
+//  		// name == "Ciel"
+//  	}
+//  	injector.Invoke(fn)
+//  }
 package inject
 
 import (
@@ -5,21 +43,27 @@ import (
 	"reflect"
 )
 
+// Inject represents an interface for mapping and injecting dependencies into structs
+// and function arguments.
 type Inject interface {
 	Injector
 	Invoker
 	TypeMapper
 }
 
+// Injector represents an interface for mapping dependencies to a struct.
 type Injector interface {
 	Inject(interface{}) error
 	InjectTag(interface{}, string) error
 }
 
+// Invoker represents an interface for calling functions via reflection.
 type Invoker interface {
 	Invoke(interface{}) ([]reflect.Value, error)
 }
 
+// TypeMapper represents an interface for mapping interface{} values based
+// on type or struct tag.
 type TypeMapper interface {
 	Map(interface{}) TypeMapper
 	MapTag(interface{}, string) TypeMapper
@@ -27,6 +71,8 @@ type TypeMapper interface {
 	GetTag(string) (reflect.Value, error)
 }
 
+// TypeOf returns a type for a given value. If the given type is a pointer, it
+// will return its object's type.
 func TypeOf(val interface{}) reflect.Type {
 	t := reflect.TypeOf(val)
 	if t.Kind() == reflect.Ptr {
@@ -35,6 +81,8 @@ func TypeOf(val interface{}) reflect.Type {
 	return t
 }
 
+// ValueOf returns a value for a given value. If the given type is a pointer, it
+// will return its object's value.
 func ValueOf(val interface{}) reflect.Value {
 	v := reflect.ValueOf(val)
 	if v.Kind() == reflect.Ptr {
@@ -49,10 +97,14 @@ type injector struct {
 	tagMap  map[string]reflect.Value
 }
 
+// New creates a new Inject with "inject" tag. Struct can use "inject" tag if
+// it wants to be injected.
 func New() Inject {
 	return NewTag("inject")
 }
 
+// NewTag creates a new Inject with given tag. Struct can use the given tag if
+// it wants to be injected.
 func NewTag(tag string) Inject {
 	return &injector{
 		tag:     tag,
