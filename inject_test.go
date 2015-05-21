@@ -82,7 +82,7 @@ func Test_Inject(t *testing.T) {
 	injector.MapTag(password, "password")
 
 	u := user{}
-	injector.Inject(&u)
+	injector.Apply(&u)
 	equal(t, u.Name, name)
 	equal(t, u.Password, password)
 	equal(t, u.Usertype, usertype)
@@ -104,7 +104,7 @@ func Test_InjectCustomTag(t *testing.T) {
 	injector.MapTag(password, "password")
 
 	u := user{}
-	injector.Inject(&u)
+	injector.Apply(&u)
 	equal(t, u.Name, name)
 	equal(t, u.Password, password)
 	equal(t, u.Usertype, usertype)

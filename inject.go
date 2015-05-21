@@ -42,18 +42,19 @@ import (
 	"reflect"
 )
 
-// Inject represents an interface for mapping and injecting dependencies into structs
+// Injector represents an interface for mapping and injecting dependencies into structs
 // and function arguments.
-type Inject interface {
-	Injector
+type Injector interface {
+	Applicator
 	Invoker
 	TypeMapper
+	SetParent(Injector)
 }
 
-// Injector represents an interface for mapping dependencies to a struct.
-type Injector interface {
-	Inject(interface{}) error
-	InjectTag(interface{}, string) error
+// Applicator represents an interface for mapping dependencies to a struct.
+type Applicator interface {
+	Apply(interface{}) error
+	ApplyTag(interface{}, string) error
 }
 
 // Invoker represents an interface for calling functions via reflection.
@@ -93,19 +94,20 @@ func ValueOf(val interface{}) reflect.Value {
 
 type injector struct {
 	tag     string
+	parent  Injector
 	typeMap map[reflect.Type]reflect.Value
 	tagMap  map[string]reflect.Value
 }
 
-// New creates a new Inject with "inject" tag. Struct can use "inject" tag if
+// New creates a new Injector with "inject" tag. Struct can use "inject" tag if
 // it wants to be injected.
-func New() Inject {
+func New() Injector {
 	return NewTag("inject")
 }
 
-// NewTag creates a new Inject with given tag. Struct can use the given tag if
+// NewTag creates a new Injector with given tag. Struct can use the given tag if
 // it wants to be injected.
-func NewTag(tag string) Inject {
+func NewTag(tag string) Injector {
 	return &injector{
 		tag:     tag,
 		typeMap: make(map[reflect.Type]reflect.Value),
@@ -113,11 +115,11 @@ func NewTag(tag string) Inject {
 	}
 }
 
-func (i *injector) Inject(stc interface{}) error {
-	return i.InjectTag(stc, i.tag)
+func (i *injector) Apply(stc interface{}) error {
+	return i.ApplyTag(stc, i.tag)
 }
 
-func (i *injector) InjectTag(stc interface{}, tag string) error {
+func (i *injector) ApplyTag(stc interface{}, tag string) error {
 	v := ValueOf(stc)
 	t := TypeOf(stc)
 	if v.Kind() != reflect.Struct {
@@ -224,6 +226,10 @@ func (i *injector) Get(t reflect.Type) (reflect.Value, error) {
 		}
 	}
 
+	if !val.IsValid() && i.parent != nil {
+		return i.parent.Get(t)
+	}
+
 	if !val.IsValid() {
 		return val, errors.New("value is not valid")
 	}
@@ -233,9 +239,18 @@ func (i *injector) Get(t reflect.Type) (reflect.Value, error) {
 
 func (i *injector) GetTag(tag string) (reflect.Value, error) {
 	val := i.tagMap[tag]
+
+	if !val.IsValid() && i.parent != nil {
+		return i.parent.GetTag(tag)
+	}
+
 	var err error
 	if !val.IsValid() {
 		err = errors.New("value is not valid")
 	}
 	return val, err
+}
+
+func (i *injector) SetParent(parent Injector) {
+	i.parent = parent
 }
