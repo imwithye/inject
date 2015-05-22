@@ -60,7 +60,7 @@ type Applicator interface {
 // Invoker represents an interface for calling functions via reflection.
 type Invoker interface {
 	Invoke(interface{}) ([]reflect.Value, error)
-	InvokeTag(...interface{}) ([]reflect.Value, error)
+	InvokeTag([]interface{}) ([]reflect.Value, error)
 }
 
 // TypeMapper represents an interface for mapping interface{} values based
@@ -163,7 +163,7 @@ func (i *injector) Invoke(fn interface{}) ([]reflect.Value, error) {
 	return reflect.ValueOf(fn).Call(in), nil
 }
 
-func (i *injector) InvokeTag(vals ...interface{}) ([]reflect.Value, error) {
+func (i *injector) InvokeTag(vals []interface{}) ([]reflect.Value, error) {
 	if len(vals) == 0 {
 		return nil, nil
 	}

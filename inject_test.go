@@ -63,7 +63,7 @@ func Test_InvokeTag(t *testing.T) {
 			t.Errorf("Expected %s - Got %s", "TOKEN: 19940730", gender)
 		}
 	}
-	injector.InvokeTag("name", "password", "gender", fn)
+	injector.InvokeTag([]interface{}{"name", "password", "gender", fn})
 }
 
 func Test_Inject(t *testing.T) {
