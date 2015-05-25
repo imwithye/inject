@@ -24,6 +24,15 @@ func Test_Map(t *testing.T) {
 	equal(t, val.String(), "Hello World")
 }
 
+func Test_MapTo(t *testing.T) {
+	injector := New()
+	type SpecialString interface{}
+	injector.MapTo("Hello World", (*SpecialString)(nil))
+	injector.Invoke(func(s SpecialString) {
+		equal(t, s, "Hello World")
+	})
+}
+
 func Test_MapTag(t *testing.T) {
 	injector := New()
 	injector.MapTag("Hello World", "name")

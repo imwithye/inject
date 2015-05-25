@@ -67,6 +67,7 @@ type Invoker interface {
 // on type or struct tag.
 type TypeMapper interface {
 	Map(interface{}) TypeMapper
+	MapTo(interface{}, interface{}) TypeMapper
 	MapTag(interface{}, string) TypeMapper
 	Get(t reflect.Type) (reflect.Value, error)
 	GetTag(string) (reflect.Value, error)
@@ -79,6 +80,18 @@ func TypeOf(val interface{}) reflect.Type {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
+	return t
+}
+
+// InterfaceOf dereferences a pointer to an Interface type.
+// It panics if value is not an pointer to an interface.
+func InterfaceOf(value interface{}) reflect.Type {
+	t := TypeOf(value)
+
+	if t.Kind() != reflect.Interface {
+		panic("Called inject.InterfaceOf with a value that is not a pointer to an interface. (*MyInterface)(nil)")
+	}
+
 	return t
 }
 
@@ -205,6 +218,11 @@ func (i *injector) InvokeTag(vals []interface{}) ([]reflect.Value, error) {
 
 func (i *injector) Map(val interface{}) TypeMapper {
 	i.typeMap[reflect.TypeOf(val)] = reflect.ValueOf(val)
+	return i
+}
+
+func (i *injector) MapTo(val interface{}, ifacePtr interface{}) TypeMapper {
+	i.typeMap[InterfaceOf(ifacePtr)] = reflect.ValueOf(val)
 	return i
 }
 
