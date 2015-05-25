@@ -38,7 +38,7 @@
 package inject
 
 import (
-	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -133,10 +133,12 @@ func (i *injector) ApplyTag(stc interface{}, tag string) error {
 				value reflect.Value
 				err   error
 			)
-			if string(stcField.Tag) == tag || stcField.Tag.Get(tag) != "" {
+			if string(stcField.Tag) == tag {
+				value, err = i.Get(f.Type())
+			} else if string(stcField.Tag) == fmt.Sprintf("%s:\"\"", tag) || stcField.Tag.Get(tag) != "" {
 				value, err = i.GetTag(stcField.Tag.Get(tag))
 			} else {
-				value, err = i.Get(f.Type())
+				continue
 			}
 			if err != nil {
 				return err
@@ -202,7 +204,7 @@ func (i *injector) InvokeTag(vals []interface{}) ([]reflect.Value, error) {
 }
 
 func (i *injector) Map(val interface{}) TypeMapper {
-	i.typeMap[TypeOf(val)] = reflect.ValueOf(val)
+	i.typeMap[reflect.TypeOf(val)] = reflect.ValueOf(val)
 	return i
 }
 
@@ -231,7 +233,7 @@ func (i *injector) Get(t reflect.Type) (reflect.Value, error) {
 	}
 
 	if !val.IsValid() {
-		return val, errors.New("value is not valid")
+		return val, fmt.Errorf("value is not valid")
 	}
 
 	return val, nil
@@ -246,7 +248,7 @@ func (i *injector) GetTag(tag string) (reflect.Value, error) {
 
 	var err error
 	if !val.IsValid() {
-		err = errors.New("value is not valid")
+		err = fmt.Errorf("value is not valid")
 	}
 	return val, err
 }

@@ -70,7 +70,8 @@ func Test_Inject(t *testing.T) {
 	type user struct {
 		Name     string `inject:"name"`
 		Password string `inject:"password"`
-		Usertype string
+		Usertype string `inject`
+		NoInject string
 	}
 	injector := New()
 
@@ -86,13 +87,14 @@ func Test_Inject(t *testing.T) {
 	equal(t, u.Name, name)
 	equal(t, u.Password, password)
 	equal(t, u.Usertype, usertype)
+	equal(t, u.NoInject, "")
 }
 
 func Test_InjectCustomTag(t *testing.T) {
 	type user struct {
 		Name     string `db:"name"`
 		Password string `db:"password"`
-		Usertype string
+		Usertype string `db`
 	}
 	injector := NewTag("db")
 
